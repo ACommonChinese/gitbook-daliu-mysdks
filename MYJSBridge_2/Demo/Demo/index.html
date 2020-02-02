@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+      .title {
+          text-align: center;
+      }
+      .buttonFont {
+          font-size: 20px;
+      }
+      .programFont {
+          font-size: 15px;
+          font-family: "Courier"
+      }
+  </style>
+</head>
+<body>
+    <h1 class="title">测试使用MYJSBridge</h1>
+    <div class="title">
+      <p class="programFont">native需要: registHandler:'doIt' handler: 闭包</p>
+      <button class="buttonFont" onclick="doIt();">JS调用Native的"doIt"方法</button>
+    </div>
+    
+    <div class="title">
+        <p class="programFont">点击下面按钮即JS注册方法给Native调用<p>
+        <p class="programFont">即: js registHandler("jsMethod", function(data, responseCallback) { alert(data) })</p>
+        <button class="buttonFont" onclick="doIt_2();">注册JS方法给Native调用</button>
+    </div>
+  <script>
+    // JS调用doIt()方法
+    function doIt() {
+        setupJSBridge(function(bridge) {
+            // JS调OC注册的方法
+            bridge.call('doIt', {key:'value'}, function(data) {
+                alert(data);
+            });
+        });
+    }
+  
+    function doIt_2() {
+      setupJSBridge(function(bridge) {
+          // JS调OC注册的方法
+          bridge.registerHandler('jsMethod', function(data, responseCallback) {
+                if (responseCallback) {
+                    alert("HEHERE!!!"); // 调用了
+                    responseCallback("yes!!");
+                }
+                                 else {
+                                 alert("not exist!!");
+                                 }
+          });
+      });
+    }
+    
+    // 注册JS方法"jsMethod"给Native调用
+    function setupJSBridge(callback) {
+        if (window.MYJSBridge) {
+            alert('有window.MYJSBridge对象, 直接使用')
+            return callback(window.MYJSBridge);
+        }
+        else {
+            alert('不存在window.MYJSBridge, 需要注入');
+        }
+        if (window.JsCallbacks) {
+            return window.JSCallbacks.push(callback);
+        }
+    
+        // Delay callback
+        window.JSCallbacks = [callback];
+        var JSIframe = document.createElement('iframe');
+        JSIframe.style.display = 'none';
+        JSIframe.src = 'https://__jb_bridge_loaded__';
+        document.documentElement.appendChild(JSIframe);
+        setTimeout(function(){ document.documentElement.removeChild(JSIframe); }, 0);
+    }
+  </script>
+  
+</body>
+</html>
